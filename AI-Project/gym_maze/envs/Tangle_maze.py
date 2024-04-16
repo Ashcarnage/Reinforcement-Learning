@@ -7,16 +7,22 @@ from envs.maze_view_2d import MazeView2D
 class TangleMaze (gym.Env):
     metadata =  {"render_modes" : ["Human"],"render_fps" : 30}
     ACTION = ["N", "S", "E", "W"]
-    def __init__(self, maze : np.ndarray = None, maze_size = None, start = None, goal = None, mode = None, enable_render = True):
+    def __init__(self, maze_file : np.ndarray = None, maze_size = None, start = None, goal = None, mode = None, enable_render = True):
         super().__init__()
         self.enable_render = enable_render
-        self.maze =  maze
-        self.target_goal = (maze_size[0]-1,maze_size[1]-1)
+        self.maze =  maze_file
         self.info =  {}
         # self.height,self.width =  maze.shape 
         self.total_actions = 4
         self.action_space = spaces.Discrete(self.total_actions)
-        if maze_size:
+        if maze_file:
+            self.maze_view = MazeView2D(maze_name="Amigo - Maze (%s)" % maze_file,
+                                        maze_file_path=maze_file,
+                                        screen_size=(640, 640), 
+                                        enable_render=enable_render)
+
+
+        elif maze_size:
             if mode == "plus":
                 has_loops = True
                 num_portals = int(round(min(maze_size)))
@@ -28,8 +34,10 @@ class TangleMaze (gym.Env):
                                         screen_size=(640, 640),
                                         has_loops=has_loops, num_portals=num_portals,
                                         enable_render=enable_render)
+
             
         self.maze_size = self.maze_view.maze_size
+        self.target_goal = (self.maze_size[0]-1,self.maze_size[1]-1)
 
         low = np.zeros(len(self.maze_size), dtype=int)
         high =  np.array(self.maze_size, dtype=int) - np.ones(len(self.maze_size), dtype=int)
@@ -57,7 +65,7 @@ class TangleMaze (gym.Env):
     def is_closer_to_goal(self,state, next_state):
         prev_dist = self.manhattan_distance(state)
         new_dist = self.manhattan_distance(next_state)
-        print("the distances are : ",prev_dist,new_dist)
+        # print("the distances are : ",prev_dist,new_dist)
         if new_dist < prev_dist:
             return True
         return False
@@ -66,53 +74,65 @@ class TangleMaze (gym.Env):
         return 2/(1+np.e**(reward*0.01))-1
     
 
-    def step(self, action,state_history):
-        progress_reward = 0.3
-        revisit_penalty = -0.8
-        wall_penalty = -0.3
+    def step(self, action, state, state_history):
+        progress_reward = 0.5
+        revisit_penalty = -0.25
+        wall_penalty = -0.1
+        state = tuple(state)
 
-        if not self.maze_view.maze.is_open(self.state,self.ACTION[action]):
+
+        if not self.maze_view.maze.is_open(state,self.ACTION[action]):
             print("\nwall : ")
             reward  = wall_penalty
             done = False
-            return self.state, reward, done
-
-        if isinstance(action, int):
-            new_cell = self.maze_view.move_robot(self.ACTION[action])
-        else:
-            new_cell = self.maze_view.move_robot(self.ACTION[action])
-        prev_dist = self.manhattan_distance(self.state)
-        new_dist = self.manhattan_distance(new_cell)
-        print("MANHATTAN DISTANCE : ",prev_dist,new_dist)
-        print()
-        print("state_history : ",state_history)
+            return state, reward, done
+        self.maze_view.move_robot(self.ACTION[action])
+        new_cell = tuple(self.maze_view.robot)
+        # prev_dist = self.manhattan_distance(self.state)
+        # new_dist = self.manhattan_distance(new_cell)
+        # print("MANHATTAN DISTANCE : ",prev_dist,new_dist)
+        # print()
+        # print(f"new cell  : {new_cell}    state_history : ",state_history)
+        flag = True
+        # print("holaaaa 3: ",state)
+        # print("->>>>>>>>  ",new_cell,state,action)
         if np.array_equal(self.maze_view.robot, self.maze_view.goal):
-            print("oqoqoq0")
+            print("\ngoalllll : ")
             reward = 1
             done = True
+            flag = False
+            return state, reward, done
 
-        elif self.is_closer_to_goal(self.state,new_cell):
-            #print(self.state," : ohhhhh  : ",new_cell)
+        if self.is_closer_to_goal(state,new_cell):
             print("\nA step closer : ")
-            reward = progress_reward#self.sigmoid(0.1*(new_dist+0.001))
+            reward = progress_reward
             done  =  False
+            flag = False
 
-        elif new_cell[0]==self.state[0] and new_cell[1]==self.state[1] :
+        if new_cell[0]==state[0] and new_cell[1]==state[1] :
+            print("->>>>>>>>  ",new_cell,state)
             print("\nLoop state : ")
-            reward = -0.5
+            reward = -0.2
             done = False
+            flag = False
 
-        elif new_cell in state_history:
+        if new_cell in state_history:
+            count = 0
+            for i in state_history:
+                if new_cell==i:
+                    count+=1
             print("\naaaaaaaaaaa  hahah   revisited : ")
-            reward = revisit_penalty
+            reward = revisit_penalty*count
             done = False
+            flag = False
 
-        else:
+        if flag:
             print("\nnormal move : ")
             reward = 0.1
             done = False
 
-        self.state = self.maze_view.robot
+        self.state = tuple(self.maze_view.robot)
+        # print("next state : ",self.state)
 
         return self.state, reward, done
 
@@ -133,12 +153,12 @@ class TangleMaze (gym.Env):
     
 
 class MazeEnvSample(TangleMaze):
-    def __init__(self,maze_size = None, enable_render = True):
-        super().__init__(maze_size=maze_size,enable_render = enable_render)
+    def __init__(self,file_path = None, maze_size = None, enable_render = True):
+        super().__init__(maze_file = file_path ,maze_size=maze_size,enable_render = enable_render)
 
 # m = TangleMaze(maze_size=(30,30))
 # print("yooyo")
 # print(m.observation_space.sample())
 # print(m.is_game_over())
 # print(m.render())
-# print(m.is_game_over())
+# print(m.is_game_over(),

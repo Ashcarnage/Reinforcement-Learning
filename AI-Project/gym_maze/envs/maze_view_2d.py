@@ -105,7 +105,7 @@ class MazeView2D:
             if self.maze.is_portal(self.robot):
                 self.__robot = np.array(self.maze.get_portal(tuple(self.robot)).teleport(tuple(self.robot)))
             self.__draw_robot(transparency=255)
-        return self.maze.maze_size
+
 
     def reset_robot(self):
 
@@ -286,8 +286,8 @@ class Maze:
 
     COMPASS = {
         "N": (0, -1),
-        "E": (1, 0),
         "S": (0, 1),
+        "E": (1, 0),
         "W": (-1, 0)
     }
 
@@ -325,6 +325,7 @@ class Maze:
 
         else:
             np.save(file_path, self.maze_cells, allow_pickle=False, fix_imports=True)
+            print("////////////// SAVEDDDD //////////////")
 
     @classmethod
     def load_maze(cls, file_path):
@@ -349,6 +350,7 @@ class Maze:
         cell_stack = [current_cell]
 
         # Continue until all cells are visited
+        self.i=0
         while cell_stack:
 
             # restart from a cell from the cell stack
@@ -366,8 +368,14 @@ class Maze:
                     if self.all_walls_intact(self.maze_cells[x1, y1]):
                     #if self.num_walls_broken(self.maze_cells[x1, y1]) <= 1:
                         neighbours[dir_key] = (x1, y1)
-
+                        # print(f"neigh of x,y : {x1} {y1} : ",neighbours)
+            # print(f"\n/////////// done for  {x0} {y0}  /////////\n")
+            # print(self.maze_cells)
+            # self.i+=1
+            # if self.i==10:
+            #     print("done")
             # if there is a neighbour
+
             if neighbours:
                 # select a random neighbour
                 dir = random.choice(tuple(neighbours.keys()))
@@ -375,7 +383,7 @@ class Maze:
 
                 # knock down the wall between the current cell and the selected neighbour
                 self.maze_cells[x1, y1] = self.__break_walls(self.maze_cells[x1, y1], self.__get_opposite_wall(dir))
-
+                #print(f"x1,y1 : {x1}, {y1} : ",self.maze_cells[x1, y1])
                 # push the current cell location to the stack
                 cell_stack.append(current_cell)
 
@@ -448,6 +456,7 @@ class Maze:
         # if cell is still within bounds after the move
         if self.is_within_bound(x1, y1):
             # check if the wall is opened
+            # print("PRINTING SELF MAZE CELLS",self.maze_cells)
             this_wall = bool(self.get_walls_status(self.maze_cells[cell_id[0], cell_id[1]])[dir])
             other_wall = bool(self.get_walls_status(self.maze_cells[x1, y1])[self.__get_opposite_wall(dir)])
             return this_wall or other_wall
@@ -488,8 +497,8 @@ class Maze:
     def get_walls_status(cls, cell):
         walls = {
             "N" : (cell & 0x1) >> 0,
-            "E" : (cell & 0x2) >> 1,
             "S" : (cell & 0x4) >> 2,
+            "E" : (cell & 0x2) >> 1,
             "W" : (cell & 0x8) >> 3,
         }
         return walls
