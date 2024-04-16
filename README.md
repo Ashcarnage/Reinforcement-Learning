@@ -48,9 +48,9 @@ It should work on both Python 2.7+ and 3.4+. It requires pygame and numpy.
 cd gym-maze
 python setup.py install
 ```
-```
+
 ## Examples
 An example of finding the shortest path through the maze using Q-learning can be found here: https://github.com/tuzzer/ai-gym/blob/master/maze_2d/maze_2d_q_learning.py
 
 ![Solving 20x20 maze with loops and portals using Q-Learning](http://i.giphy.com/rfazKQngdaja8.gif)
-```
+
