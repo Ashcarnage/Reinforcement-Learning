@@ -7,7 +7,7 @@ from envs.Tangle_maze import MazeEnvSample
 class QlearningAgent:
     act_dir = ["N","S","E","W"]
 
-    def __init__(self, env : MazeEnvSample, learning_rate =  0.6, discount_factor =  0.9, epsilon = 0.3):
+    def __init__(self, env : MazeEnvSample, learning_rate =  0.6, discount_factor =  0.9, epsilon = 0.1):
         self.env =  env
         self.observation_space_size =  env.observation_space.high[1] + 1
         self.total_actions = env.total_actions
@@ -45,7 +45,7 @@ class QlearningAgent:
     def next_action(self, state):
         # print(f" {state}: ------- im ammmmm iron man  -------: ",self.get_walls(state))
         if np.random.rand()< self.epsilon:
-            print("__________taking a random sample _________")
+            # print("__________taking a random sample _________")
             action = self.env.action_space.sample()
             while True:
                 if (self.env.maze_view.maze.is_open(state,self.act_dir[action])):
@@ -65,7 +65,7 @@ class QlearningAgent:
         #             return i
 
         else :
-            print("__________taking a fixed sample _________")
+            # print("__________taking a fixed sample _________")
             # print("lalalal" , f"{state[0]}{state[1]}")
             # print("value : ",np.argmax(self.Qtable[f"{state[0]}{state[1]}"]))
             return np.argmax(self.Qtable[f"{state[0]}{state[1]}"])
@@ -80,32 +80,33 @@ class QlearningAgent:
         self.Qtable[f"{state[0]}{state[1]}"][action] += self.lr*(q_target - self.Qtable[f"{state[0]}{state[1]}"][action])
 
 
-    def train(self, episodes = 100):
+    def train(self, episodes = 50):
         for episode in range(episodes):
             state = self.env.reset()
             score = 0
             self.state_history = []
-            print(f"|-------------- Episode : {episode +1} ----------------| ")
+            # print(f"|-------------- Episode : {episode +1} ----------------| ")
 
             while True:
                 action = self.next_action(state)
                 # print(f"\nthis is the current state : {state}and the next chosen action {action} \n")
                 next_state, reward, done  =  self.env.step(action,state,self.state_history)
                 self.state_history.append(tuple(state))
-                print(f"reward :{reward}")
                 score+=reward 
+                # if episode >= 450:
                 self.env.render()
 
                 self.learn(state,action,reward,next_state,done)
                 state = next_state
+                time.sleep(0.1)
 
                 if not done: 
-                    print(f"QValue for pos {next_state} : {self.Qtable[f'{next_state[0]}{next_state[1]}']}")
+                    # print(f"QValue for pos {next_state} : {self.Qtable[f'{next_state[0]}{next_state[1]}']}")
                     # print("state history : ",self.state_history)
+                    pass
                 else:
                     break
-                
-                time.sleep(0.15)
+            print(f"\n{self.Qtable} \n\nEPOCH : {episode}")              
 
     def __call__(self):
         state = self.env.reset()
@@ -131,5 +132,8 @@ if __name__ == "__main__":
     maze_size=(10,10)
     env = MazeEnvSample(file_path="/Users/ayushbhakat/Documents/Artifacto/AI-Project/gym_maze/models/models_1.npy")
     # env.maze_view.maze.save_maze(file_path = "/Users/ayushbhakat/Documents/Artifacto/AI-Project/gym_maze/models")
-    game  =  QlearningAgent(env)
+    # env = MazeEnvSample(maze_size=maze_size)
+    game  = QlearningAgent(env)
     game.train()
+    table = game.Qtable
+    np.save("/Users/ayushbhakat/Documents/Artifacto/AI-Project/gym_maze/QTables",table,allow_pickle=True, fix_imports=True)
