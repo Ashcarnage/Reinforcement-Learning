@@ -160,6 +160,7 @@ class MazeView2D:
             for y in range (len(self.maze.maze_cells[x])):
                 # check the which walls are open in each cell
                 walls_status = self.maze.get_walls_status(self.maze.maze_cells[x, y])
+                # print(f"for the cell")
                 dirs = ""
                 for dir, open in walls_status.items():
                     if open:
@@ -385,6 +386,7 @@ class Maze:
                 self.maze_cells[x1, y1] = self.__break_walls(self.maze_cells[x1, y1], self.__get_opposite_wall(dir))
                 #print(f"x1,y1 : {x1}, {y1} : ",self.maze_cells[x1, y1])
                 # push the current cell location to the stack
+                print(self.maze_cells)
                 cell_stack.append(current_cell)
 
                 # make the this neighbour cell the current cell
@@ -398,6 +400,7 @@ class Maze:
 
         if self.num_portals > 0:
             self.__set_random_portals(num_portal_sets=self.num_portals, set_size=2)
+        print(self.maze_cells)
 
     def __break_random_walls(self, percent):
         # find some random cells to break

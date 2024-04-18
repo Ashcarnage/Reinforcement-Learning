@@ -75,14 +75,14 @@ class TangleMaze (gym.Env):
     
 
     def step(self, action, state, state_history):
-        progress_reward = 0.5
-        revisit_penalty = -0.25
-        wall_penalty = -0.1
+        progress_reward = 5
+        revisit_penalty = -0.05
+        wall_penalty = -0.01
         state = tuple(state)
 
 
         if not self.maze_view.maze.is_open(state,self.ACTION[action]):
-            print("\nwall : ")
+            # print("\nwall : ")
             reward  = wall_penalty
             done = False
             return state, reward, done
@@ -97,21 +97,21 @@ class TangleMaze (gym.Env):
         # print("holaaaa 3: ",state)
         # print("->>>>>>>>  ",new_cell,state,action)
         if np.array_equal(self.maze_view.robot, self.maze_view.goal):
-            print("\ngoalllll : ")
-            reward = 1
+            # print("\ngoalllll : ")
+            reward = 10
             done = True
             flag = False
             return state, reward, done
 
         if self.is_closer_to_goal(state,new_cell):
-            print("\nA step closer : ")
+            # print("\nA step closer : ")
             reward = progress_reward
             done  =  False
             flag = False
 
         if new_cell[0]==state[0] and new_cell[1]==state[1] :
-            print("->>>>>>>>  ",new_cell,state)
-            print("\nLoop state : ")
+            # print("->>>>>>>>  ",new_cell,state)
+            # print("\nLoop state : ")
             reward = -0.2
             done = False
             flag = False
@@ -121,14 +121,14 @@ class TangleMaze (gym.Env):
             for i in state_history:
                 if new_cell==i:
                     count+=1
-            print("\naaaaaaaaaaa  hahah   revisited : ")
+            # print("\naaaaaaaaaaa  hahah   revisited : ")
             reward = revisit_penalty*count
             done = False
             flag = False
 
         if flag:
-            print("\nnormal move : ")
-            reward = 0.1
+            # print("\nnormal move : ")
+            reward = 0.2
             done = False
 
         self.state = tuple(self.maze_view.robot)
